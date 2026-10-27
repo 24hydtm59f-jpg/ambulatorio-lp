@@ -3011,10 +3011,26 @@ function closeAndPrint() {
   if (v.intervento) {
 
     const to = Store.db.settings.emailLavoro;
-    if (to) { Store.queueEmail({ to, visit_id: v.id, oggetto: `Referto ${p.cognome} ${p.nome} – ${v.intervento.procedura || dxLines(v.conclusioni)[0] || "proposta di intervento"}` }); v.intervento.inviato = todayISO(); Store.persist(); msg += ` Copia in coda per ${to}.`; }
+    if (to) { v.intervento.inviato = todayISO(); Store.persist(); sendRefertoEmail(p, v, to); msg += ` Invio in corso a ${to}…`; }
     else msg += " Paziente in attesa di intervento (mail di lavoro non impostata).";
   }
   render(); toast(msg); printVisit(v);
+}
+async function sendRefertoEmail(p, v, to) {
+  const oggetto = `Referto ${p.cognome} ${p.nome} – ${v.intervento.procedura || dxLines(v.conclusioni)[0] || "proposta di intervento"}`;
+  let stato = "errore", errore = "";
+  try {
+    const doc = R.buildPDF(window.jspdf.jsPDF, reportState(p, v), ASSETS);
+    const pdfBase64 = doc.output("datauristring").split(",")[1];
+    const filename = `${p.cognome} ${p.nome} - ${v.data} ${v.sede}.pdf`;
+    const { data, error } = await sb.functions.invoke("send-referto-email", { body: { to, subject: oggetto, filename, pdfBase64 } });
+    if (error || !(data && data.ok)) throw new Error((data && data.error) || (error && error.message) || "invio non riuscito");
+    stato = "inviata";
+  } catch (e) {
+    errore = (e && e.message) || String(e);
+    toast(`Invio referto a ${to} non riuscito: ${errore}`);
+  }
+  try { await sb.from("invii_email").insert({ visita_id: v.id, destinatario: to, oggetto, stato, errore: errore || null, inviato_il: stato === "inviata" ? new Date().toISOString() : null }); } catch (e) {}
 }
 
 document.addEventListener("click", async e => {
