@@ -1375,6 +1375,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   /* ---------- PDF (jsPDF) ---------- */
   function buildPDF(jsPDF, s, A) {
     const doc = new jsPDF({ unit: "mm", format: "a4" });
+    if (doc.viewerPreferences) doc.viewerPreferences({ PrintScaling: "None" });
     doc.addFileToVFS("m300.ttf", A.f300); doc.addFont("m300.ttf", "MontL", "normal");
     doc.addFileToVFS("m400.ttf", A.f400); doc.addFont("m400.ttf", "Mont", "normal");
     doc.addFileToVFS("m600.ttf", A.f600); doc.addFont("m600.ttf", "Mont", "bold");
@@ -1396,7 +1397,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     txt(sedeT, R - wd - ws, 56, "Mont", "normal", 10.5, 0, "#333333");
     txt(d, R - wd, 56, "Mont", "normal", 10.5);
 
-    const SIZE = 9.8, LH = 4.9, GAP = 5.4;
+    const SIZE = 10.5, LH = 5.3, GAP = 5.8;
     let y = 60;
     const newPageIfNeeded = (extra) => { if (y + (extra || 0) > BOTTOM) { doc.addPage(); y = 20; } };
 
@@ -1432,7 +1433,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     const titledSection = (label, items) => {
       if (!items || !items.length) return;
       newPageIfNeeded(11);
-      txt(label.toUpperCase(), L, y, "Mont", "bold", 7.3, 1.1, "#2a2a2a");
+      txt(label.toUpperCase(), L, y, "Mont", "bold", 7.8, 1.1, "#2a2a2a");
       y += 2.2;
       doc.setLineWidth(0.25); doc.setDrawColor("#bbbbbb"); doc.line(L, y, R, y);
       y += 5.2;
@@ -1451,7 +1452,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     {
       const nome = [s.cognome ? s.cognome.toUpperCase() : "", s.nome].filter(Boolean).join(" ");
       if (nome) {
-        txt(nome, L, y + 3.6, "Mont", "bold", 11.5, 0.08, "#1a1a1a");
+        txt(nome, L, y + 3.6, "Mont", "bold", 12.3, 0.08, "#1a1a1a");
         const bits = [];
         const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s.nascita || "");
         if (m) {
@@ -1472,8 +1473,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         if (sub.length) {
           let cx = L;
           sub.forEach((b, i) => {
-            if (i) { doc.setFont("Mont", "bold"); doc.setFontSize(9); doc.setTextColor("#3f3f3f"); doc.text(" · ", cx, y + 8); cx += doc.getTextWidth(" · "); }
-            doc.setFont("Mont", "normal"); doc.setFontSize(8); doc.setTextColor("#3f3f3f"); doc.text(b, cx, y + 8); cx += doc.getTextWidth(b);
+            if (i) { doc.setFont("Mont", "bold"); doc.setFontSize(9.6); doc.setTextColor("#3f3f3f"); doc.text(" · ", cx, y + 8); cx += doc.getTextWidth(" · "); }
+            doc.setFont("Mont", "normal"); doc.setFontSize(8.6); doc.setTextColor("#3f3f3f"); doc.text(b, cx, y + 8); cx += doc.getTextWidth(b);
           });
         }
         y += 19;
@@ -1485,16 +1486,16 @@ https://github.com/nodeca/pako/blob/main/LICENSE
        verticale simmetrico, misurato sull'ingombro reale del testo (non sulla sola baseline) ---- */
     { const DL = lines(s.conclusioni);
       if (DL.length) {
-        const DSIZE = 11, DLH = 5.5, TITLE_TO_RULE = 2, RULE_TO_TEXT = 4.6;
+        const DSIZE = 11.8, DLH = 5.9, TITLE_TO_RULE = 2, RULE_TO_TEXT = 4.9;
         const wl = wrapWords([{ t: DL.join(" "), b: true }], W, DSIZE);
-        const padTop = 4.9;   // spazio sopra la baseline del titoletto (ne "mangia" ~1.9mm l'ascendente)
-        const padBottom = 3.2; // spazio sotto la baseline dell'ultima riga di testo
+        const padTop = 5.3;   // spazio sopra la baseline del titoletto (ne "mangia" ~1.9mm l'ascendente)
+        const padBottom = 3.4; // spazio sotto la baseline dell'ultima riga di testo
         const blockH = padTop + TITLE_TO_RULE + RULE_TO_TEXT + (wl.length - 1) * DLH + padBottom;
         const BLEED = 2.5; // sfondo e riga leggermente più larghi del testo, a dx e sn
         newPageIfNeeded(blockH);
         doc.setFillColor("#eeeeee");
         doc.rect(L - BLEED, y - padTop, W + BLEED * 2, blockH, "F");
-        txt("DIAGNOSI", L, y, "Mont", "bold", 7.3, 1.1, "#1a1a1a");
+        txt("DIAGNOSI", L, y, "Mont", "bold", 7.8, 1.1, "#1a1a1a");
         y += TITLE_TO_RULE;
         doc.setLineWidth(0.25); doc.setDrawColor("#aaaaaa"); doc.line(L - BLEED, y, R + BLEED, y);
         y += RULE_TO_TEXT;
@@ -1546,7 +1547,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
     for (let p = 1; p <= totalPages; p++) {
       doc.setPage(p);
       doc.setLineWidth(0.2); doc.setDrawColor("#cccccc"); doc.line(L, 287, R, 287);
-      doc.setFont("Mont", "normal"); doc.setFontSize(7.2); doc.setTextColor("#555555");
+      doc.setFont("Mont", "normal"); doc.setFontSize(7.6); doc.setTextColor("#555555");
       doc.text(`Si prega di conservare il documento e portarlo ai controlli successivi · generato il ${todayStr}`, L, 292);
       if (totalPages > 1) {
         const tag = p < totalPages ? "segue" : "fine referto";
@@ -2464,7 +2465,7 @@ function viewVisita() {
         <div class="t">${hf("Data", `<input id="v-data" type="date" value="${esc(v.data)}" aria-label="Data della visita">`)}${hf("Ambulatorio", `<div class="seg" id="vSede" role="group" aria-label="Ambulatorio">${SEDI.map(s => `<button type="button" data-v="${s}" aria-pressed="${v.sede === s}">${s}</button>`).join("")}</div>`)}</div>
         <div class="vact${UI.discardAsk === v.id ? " ask" : ""}">${UI.discardAsk === v.id
           ? `<span class="discq">Scartare la visita? Il testo scritto andrà perso.</span><button class="btn sm" type="button" id="discardNo">No</button><button class="btn sm danger" type="button" id="discardYes">Scarta</button>`
-          : `${histForImport.length ? `<button class="btn sm amber" type="button" id="importOpen">${ICON.folder}Importa da visita precedente</button>` : ""}<span class="saved" id="saved">Salvato</span><button class="btn ghost" type="button" id="discardAsk">${IC.x}Annulla</button><button class="btn mint" type="button" id="closeAsk">${IC.check}Salva</button>`}</div>
+          : `${histForImport.length ? `<button class="btn sm amber" type="button" id="importOpen">${ICON.folder}Importa</button>` : ""}<span class="saved" id="saved">Salvato</span><button class="btn ghost" type="button" id="discardAsk">${IC.x}Annulla</button><button class="btn mint" type="button" id="closeAsk">${IC.check}Salva</button>`}</div>
 </div><div class="edgrid"><div class="panel"><div class="editor">
       ${schedaHTML(v, "draft")}
       <div class="confirm" id="closeBox" hidden><p><b>Salvare e stampare?</b> Dopo il salvataggio il referto non è più modificabile: potrai solo aggiungere integrazioni datate.</p>
