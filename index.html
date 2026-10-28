@@ -472,6 +472,7 @@ ul.dxm { margin: 0; padding-left: 16px; display: block; } ul.dxm li::marker { co
 .ivrow { grid-column: 2 / -1; display: flex; gap: 12px 22px; align-items: end; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); }
 .ivrow .field { display: grid; gap: 4px; flex: 1 1 320px; max-width: 560px; }
 .shead .vact { grid-column: 3; grid-row: 1; align-self: center; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.shead.box .vact:not(.ask) { grid-column: 1 / -1; grid-row: 2; justify-content: flex-end; margin-top: 2px; }
 .shead .vact.ask { grid-column: 1 / -1; grid-row: auto; justify-content: flex-start; padding: 10px 14px; background: var(--amber-soft); border-radius: 4px; }
 .shead .vact .discq { font-size: 13px; font-weight: 600; color: var(--amber); }
 .shead .vact .btn.ghost { color: var(--ink); } .shead .vact .btn.ghost:hover { color: var(--amber); background: var(--amber-soft); }
@@ -2146,7 +2147,7 @@ function visitViewHTML(p, v, locked) {
   const editbar = editing ? `<div class="editbar"><span>Stai modificando il referto</span><span class="row">${ibtn("x", "Annulla le modifiche", 'data-edit=""')}<button class="btn sm mint" type="button" data-editsave="${v.id}">${IC.check}Salva</button></span></div>` : "";
   const tipoCtl = editing ? `<div class="seg" id="vTipoEdit" role="group" aria-label="Tipo di visita">${[["prima", "Prima"], ["controllo", "Controllo"]].map(([k, l]) => `<button type="button" data-v="${k}" aria-pressed="${sv.tipo === k}">${l}</button>`).join("")}</div>` : `<b>${v.tipo === "prima" ? "Prima visita" : "Controllo"}</b>`;
   const dataCtl = editing ? `<input id="v-data-edit" type="date" value="${esc(sv.data)}" aria-label="Data della visita">` : `<b class="num">${sd(v.data)}</b>`;
-  const sedeCtl = editing ? `<div class="seg" id="vSedeEdit" role="group" aria-label="Ambulatorio">${SEDI.map(s => `<button type="button" data-v="${s}" aria-pressed="${sv.sede === s}">${s}</button>`).join("")}</div>` : `<b>${esc(v.sede)}</b>`;
+  const sedeCtl = editing ? `<select class="dsel" id="vSedeEdit" data-selvsedeedit aria-label="Ambulatorio">${SEDI.map(s => `<option value="${s}"${sv.sede === s ? " selected" : ""}>${s}</option>`).join("")}</select>` : `<b>${esc(v.sede)}</b>`;
   const head = `${editbar}<div class="shead">${hf("Visita", tipoCtl, "k")}<div class="t">${hf("Data", dataCtl)}${hf("Ambulatorio", sedeCtl)}${hf("Stato", `<b>${v.stato === "chiusa" ? "Chiuso" : "Bozza"}</b>`)}
       ${isInfiltr(v) ? '<span class="chip inf">Infiltrazione</span>' : ""}</div>
       <div class="vact">${v.stato === "chiusa" && !editing ? `${locked ? "" : ibtn("edit", "Modifica il referto", `data-edit="${v.id}"`)}${ibtn("print", "Ristampa", `data-print="${v.id}"`, "mint")}` : ""}${locked ? ibtn("x", "Chiudi", 'id="viewClose"') : ""}</div></div>`;
@@ -2462,7 +2463,7 @@ function viewVisita() {
   } else {
     const histForImport = Store.visitsOf(p.id).filter(x => x.stato === "chiusa" && x.id !== v.id);
     main = `<div class="shead box">${hf("Visita", `<b>${v.tipo === "prima" ? "Prima visita" : "Controllo"}</b>`, "k")}
-        <div class="t">${hf("Data", `<input id="v-data" type="date" value="${esc(v.data)}" aria-label="Data della visita">`)}${hf("Ambulatorio", `<div class="seg" id="vSede" role="group" aria-label="Ambulatorio">${SEDI.map(s => `<button type="button" data-v="${s}" aria-pressed="${v.sede === s}">${s}</button>`).join("")}</div>`)}</div>
+        <div class="t">${hf("Data", `<input id="v-data" type="date" value="${esc(v.data)}" aria-label="Data della visita">`)}${hf("Ambulatorio", `<select class="dsel" id="vSede" data-selvsede aria-label="Ambulatorio">${SEDI.map(s => `<option value="${s}"${v.sede === s ? " selected" : ""}>${s}</option>`).join("")}</select>`)}</div>
         <div class="vact${UI.discardAsk === v.id ? " ask" : ""}">${UI.discardAsk === v.id
           ? `<span class="discq">Scartare la visita? Il testo scritto andrà perso.</span><button class="btn sm" type="button" id="discardNo">No</button><button class="btn sm danger" type="button" id="discardYes">Scarta</button>`
           : `${histForImport.length ? `<button class="btn sm amber" type="button" id="importOpen">${ICON.folder}Importa</button>` : ""}<span class="saved" id="saved">Salvato</span><button class="btn ghost" type="button" id="discardAsk">${IC.x}Annulla</button><button class="btn mint" type="button" id="closeAsk">${IC.check}Salva</button>`}</div>
@@ -2905,6 +2906,8 @@ document.addEventListener("input", e => {
 });
 window.addEventListener("beforeunload", e => { if (UI.editVid) { e.preventDefault(); e.returnValue = ""; } });
 document.addEventListener("change", e => {
+  if (e.target.dataset && e.target.dataset.selvsede != null) { const v = Store.visit(UI.vid); v.sede = e.target.value; Store.saveVisit(v); return render(); }
+  if (e.target.dataset && e.target.dataset.selvsedeedit != null) { if (!UI.editPatch) UI.editPatch = {}; UI.editPatch.sede = e.target.value; return; }
   if (e.target.dataset && e.target.dataset.selperiodo != null) { UI.att.periodo = e.target.value; return render(); }
   if (e.target.dataset && e.target.dataset.selsede != null) { UI.att.sede = e.target.value; return render(); }
   if (e.target.dataset && e.target.dataset.seltipo != null) { UI.att.tipo = e.target.value; return render(); }
@@ -3006,6 +3009,7 @@ function discardDraft() { const v = Store.visit(UI.vid); if (!v || v.stato !== "
 function closeAndPrint() {
   clearTimeout(saveT);
   const v = Store.visit(UI.vid); const p = Store.patient(v.patient_id);
+  if (!dxLines(v.conclusioni).length) { toast("La Diagnosi è obbligatoria: compilala prima di chiudere il referto."); return; }
   if (!SECTIONS.some(k => (v[k] || "").trim())) { toast("Il referto è vuoto: compila almeno una sezione."); return; }
   Store.closeVisit(v.id);
   let msg = "Referto chiuso.";
@@ -3119,9 +3123,7 @@ document.addEventListener("click", async e => {
     if (on) { const fv = focusVisit(); if (!fv) return; UI.ivEdit = Store.addIntervento(p.id, fv.id, fv.data).id; }
     else { Store.delIntervento(i.id); toast("Rimossa indicazione chirurgica."); }
     ivDraftSync(p); render(); if (on) { const x = $("chProc"); if (x) x.focus(); } return; }
-  if (t.closest("#vSede") && t.dataset.v) { const v = Store.visit(UI.vid); v.sede = t.dataset.v; Store.saveVisit(v); return render(); }
   if (t.closest("#vTipoEdit") && t.dataset.v) { const box = t.closest("#vTipoEdit"); box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b === t ? "true" : "false")); if (!UI.editPatch) UI.editPatch = {}; UI.editPatch.tipo = t.dataset.v; return; }
-  if (t.closest("#vSedeEdit") && t.dataset.v) { const box = t.closest("#vSedeEdit"); box.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b === t ? "true" : "false")); if (!UI.editPatch) UI.editPatch = {}; UI.editPatch.sede = t.dataset.v; return; }
   if (t.dataset.aproapen) { UI.aprOpen[t.dataset.aproapen] = true; const v = Store.visit(t.dataset.aproapen); const box = t.closest(".aprbox"); if (v && box) { const mode = box.dataset.mode;
     const sv = (mode === "edit" && UI.editPatch) ? Object.assign({}, v, UI.editPatch) : v; box.outerHTML = aprEditHTML(sv, mode); } return; }
   if (t.dataset.aprcollapse) { UI.aprOpen[t.dataset.aprcollapse] = false; const v = Store.visit(t.dataset.aprcollapse); const box = t.closest(".aprbox"); if (v && box) { const mode = box.dataset.mode;
@@ -3134,7 +3136,7 @@ document.addEventListener("click", async e => {
     const lp = $("livePrev"); if (lp) { lp.innerHTML = paperHTML(Store.patient(v.patient_id), v); fitAll(lp); }
     $("saved").textContent = "Salvataggio…"; clearTimeout(saveT); saveT = setTimeout(() => { $("saved").textContent = Store.saveVisit(v) ? "Salvato" : "Non salvato"; }, 400);
     box.outerHTML = aprEditHTML(v, mode); return; }
-  if (id === "closeAsk") { $("closeBox").hidden = false; $("closeBox").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  if (id === "closeAsk") { const v = Store.visit(UI.vid); if (!dxLines(v.conclusioni).length) { toast("La Diagnosi è obbligatoria: compilala prima di chiudere il referto."); return; } $("closeBox").hidden = false; $("closeBox").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
   if (id === "closeNo") { $("closeBox").hidden = true; return; }
   if (id === "closeYes") return closeAndPrint();
   if (t.dataset.ptedit) { UI.editProb = t.dataset.ptedit; render(); const i = $("ptInput"); if (i) { i.focus(); i.select(); } return; }
