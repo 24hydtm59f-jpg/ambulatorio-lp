@@ -1506,6 +1506,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
        verticale simmetrico, misurato sull'ingombro reale del testo (non sulla sola baseline) ---- */
     { const DL = lines(s.conclusioni);
       if (DL.length) {
+        y += 5; // respiro in più tra il blocco anagrafica (con le sue righe) e il box diagnosi
         const DSIZE = 11.8, DLH = 5.9, TITLE_TO_RULE = 2, RULE_TO_TEXT = 4.9;
         const wl = DL.flatMap(line => wrapWords([{ t: line, b: true }], W, DSIZE));
         const padTop = 5.3;   // spazio sopra la baseline del titoletto (ne "mangia" ~1.9mm l'ascendente)
