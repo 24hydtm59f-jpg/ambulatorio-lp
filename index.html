@@ -1456,11 +1456,11 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       y += GAP;
     };
 
-    /* ---- anagrafica: nome in grassetto, età · data di nascita · telefono sotto (come colonna sn dell'app) ---- */
+    /* ---- anagrafica: nome più grande in grassetto, età · data di nascita · telefono sotto,
+       dentro un riquadro chiaro (più leggero di quello della diagnosi) per dargli più risalto ---- */
     {
       const nome = [s.cognome ? s.cognome.toUpperCase() : "", s.nome].filter(Boolean).join(" ");
       if (nome) {
-        txt(nome, L, y + 3.6, "Mont", "bold", 12.3, 0.08, "#1a1a1a");
         const bits = [];
         const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s.nascita || "");
         if (m) {
@@ -1478,14 +1478,24 @@ https://github.com/nodeca/pako/blob/main/LICENSE
           bits.push(d2.length === 10 ? `+39 ${d2.slice(0, 3)} ${d2.slice(3, 5)} ${d2.slice(5, 7)} ${d2.slice(7)}` : d2 ? `+39 ${d2}` : "");
         }
         const sub = bits.filter(Boolean);
+        const padTop = 5.0, padBottom = 4.2, nameAsc = 4.0, gapToSub = 6.3;
+        const boxTop = y - padTop;
+        const nameY = boxTop + padTop + nameAsc;
+        const subY = nameY + gapToSub;
+        const blockH = ((sub.length ? subY : nameY) - boxTop) + padBottom;
+        const BLEED = 2.5;
+        newPageIfNeeded(blockH);
+        doc.setFillColor("#f4f5f5");
+        doc.rect(L - BLEED, boxTop, W + BLEED * 2, blockH, "F");
+        txt(nome, L, nameY, "Mont", "bold", 13.5, 0.08, "#1a1a1a");
         if (sub.length) {
           let cx = L;
           sub.forEach((b, i) => {
-            if (i) { doc.setFont("Mont", "bold"); doc.setFontSize(9.6); doc.setTextColor("#3f3f3f"); doc.text(" · ", cx, y + 8); cx += doc.getTextWidth(" · "); }
-            doc.setFont("Mont", "normal"); doc.setFontSize(8.6); doc.setTextColor("#3f3f3f"); doc.text(b, cx, y + 8); cx += doc.getTextWidth(b);
+            if (i) { doc.setFont("Mont", "bold"); doc.setFontSize(10.2); doc.setTextColor("#3f3f3f"); doc.text(" · ", cx, subY); cx += doc.getTextWidth(" · "); }
+            doc.setFont("Mont", "normal"); doc.setFontSize(9.2); doc.setTextColor("#3f3f3f"); doc.text(b, cx, subY); cx += doc.getTextWidth(b);
           });
         }
-        y += 19;
+        y = boxTop + blockH + 4.5;
       }
     }
 
