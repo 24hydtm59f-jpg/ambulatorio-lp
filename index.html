@@ -2358,12 +2358,17 @@ function ivColHTML(p, v) {
   const open = on && !ro && (UI.ivEdit === c.id || !c.classe);
   const dxL = g && g.titolo !== "Problema senza diagnosi" ? dxLines(g.titolo) : [];
   const dxShow = on && c.diagnosi ? [c.diagnosi] : dxL;
-  const ivdl = (withIc) => `<dl class="ivdl"><dt>Diagnosi</dt><dd class="dxu">${dxShow.length ? dxShow.map(l => `<span>${esc(l)}</span>`).join("") : '<span class="none">—</span>'}</dd>
-    ${withIc ? `<dt>Intervento chirurgico</dt><dd>${c.procedura || c.classe ? `<b>${c.procedura ? esc(c.procedura) : "intervento"}${c.classe ? ` · classe ${esc(c.classe)}` : ""}</b>` : '<span class="none">non indicato</span>'}</dd>` : ""}</dl>`;
   const diagField = () => { const cur = c.diagnosi || dxL[0] || "";
     return dxL.length > 1
       ? `<select id="ivDiag" data-ivdiag aria-label="Diagnosi di riferimento">${dxL.map(l => `<option value="${esc(l)}"${l === cur ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`
       : `<input type="text" id="ivDiag" data-ivdiag value="${esc(cur)}" placeholder="diagnosi" aria-label="Diagnosi">`; };
+  /* se ci sono più diagnosi, il selettore (per scegliere a quale si riferisce l'intervento) è
+     mostrato sempre, anche nella vista riassuntiva chiusa — non solo quando si è in modifica */
+  const ivdl = (withIc) => `<dl class="ivdl"><dt>Diagnosi</dt><dd class="dxu">${
+    on && dxL.length > 1 && !ro ? diagField()
+      : dxShow.length ? dxShow.map(l => `<span>${esc(l)}</span>`).join("") : '<span class="none">—</span>'
+  }</dd>
+    ${withIc ? `<dt>Intervento chirurgico</dt><dd>${c.procedura || c.classe ? `<b>${c.procedura ? esc(c.procedura) : "intervento"}${c.classe ? ` · classe ${esc(c.classe)}` : ""}</b>` : '<span class="none">non indicato</span>'}</dd>` : ""}</dl>`;
   const cls = on ? `${!on ? "" : op ? " operato" : w.over ? " over" : " attesa"}` : "";
   let body;
   if (!on) body = `<div class="ivrowh"><span class="lbl">Intervento</span>${ro ? "" : `<div class="seg sm" id="ivOn" role="group" aria-label="Intervento chirurgico"><button type="button" data-v="no" aria-pressed="true">No</button><button type="button" data-v="si" aria-pressed="false">Sì</button></div>`}</div>`;
@@ -2939,7 +2944,7 @@ document.addEventListener("change", e => {
   if (e.target.dataset && e.target.dataset.seltipo != null) { UI.att.tipo = e.target.value; return render(); }
   if (e.target.dataset && e.target.dataset.selvista != null) { UI.att.vista = e.target.value; return render(); }
   if (e.target.dataset && e.target.dataset.chirproc != null) { const i = curIv(); if (i) { Store.updIntervento(i.id, { procedura: e.target.value.trim() }); ivDraftSync(Store.patient(UI.pid)); toast("Intervento aggiornato."); } return; }
-  if (e.target.dataset && e.target.dataset.ivdiag != null) { const i = curIv(); if (i) { Store.updIntervento(i.id, { diagnosi: e.target.value.trim() }); ivDraftSync(Store.patient(UI.pid)); toast("Diagnosi aggiornata."); } return; }
+  if (e.target.dataset && e.target.dataset.ivdiag != null) { const i = curIv(); if (i) { Store.updIntervento(i.id, { diagnosi: e.target.value.trim() }); ivDraftSync(Store.patient(UI.pid)); toast("Diagnosi aggiornata."); return render(); } return; }
   if (e.target.dataset && e.target.dataset.opproc != null) { Store.updIntervento(e.target.dataset.opproc, { procedura: e.target.value.trim() }); toast("Intervento aggiornato."); return; }
   if (e.target.dataset && e.target.dataset.opclassesel != null) { UI.op.classe = e.target.value; return render(); }
   if (e.target.dataset && e.target.dataset.selstato != null) return go({ filter: e.target.value });
